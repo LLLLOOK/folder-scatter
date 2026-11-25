@@ -51,8 +51,8 @@ Windows 桌面小工具。从网上下的压缩包、别人发来的资料，解
 需要 Windows 10/11 和 Python 3.9+（开发环境是 3.13）。
 
 ```bat
-git clone <你的仓库地址>
-cd 文件夹散开助手
+git clone https://github.com/<你的用户名>/folder-scatter.git
+cd folder-scatter
 pip install -r requirements.txt
 python main.py
 ```
