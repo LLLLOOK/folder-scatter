@@ -1,0 +1,17 @@
+* text=auto
+
+# Windows 脚本必须是 CRLF，否则部分环境下 cmd 解析异常
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+
+# 二进制
+*.png binary
+*.ico binary
+*.exe binary

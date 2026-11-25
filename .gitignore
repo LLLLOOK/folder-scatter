@@ -1,0 +1,49 @@
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---------- 打包产物 ----------
+build/
+dist/
+dist_nuitka_*/
+*.build/
+*.dist/
+*.onefile.exe
+nuitka-crash-report.xml
+*.spec
+
+# ---------- 运行时数据（含本机路径，禁止入库） ----------
+undo_history.json
+undo_history.json.bak
+undo_history.json.corrupt
+undo_group.json
+*.log
+crash.log
+
+# ---------- 备份目录 ----------
+散开备份/
+.scatter_backup/
+.~keep/
+*.scatter_backup
+
+# ---------- 本机专用启动配置 ----------
+run.local.bat
+
+# ---------- 编辑器 / 工具 ----------
+.codebuddy/
+.idea/
+.vscode/
+*.bak
+*.tmp
+
+# ---------- 系统 ----------
+Thumbs.db
+desktop.ini
+.DS_Store

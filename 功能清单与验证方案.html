@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文件夹散开助手 — 功能清单与完整验证方案</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --text:#1f2329; --sub:#5f6b7a; --line:#e3e6eb;
+    --accent:#2f6fed; --accent-soft:#e8f0fe; --ok:#1a9e5c; --warn:#d97b06; --bad:#d64545;
+    --code-bg:#f0f2f5;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#16181d; --card:#1f232b; --text:#e6e8ec; --sub:#9aa4b2; --line:#323844;
+      --accent:#5b8def; --accent-soft:#22304a; --ok:#3fbf7f; --warn:#e0a04a; --bad:#e06c6c;
+      --code-bg:#262b34;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:"Microsoft YaHei","Segoe UI",sans-serif;font-size:14px;line-height:1.7}
+  header{background:linear-gradient(135deg,#2f6fed,#6a4fd8);color:#fff;padding:28px 32px}
+  header h1{margin:0 0 6px;font-size:22px}
+  header p{margin:0;opacity:.85;font-size:13px}
+  .stats{display:flex;gap:18px;margin-top:14px;flex-wrap:wrap}
+  .stat{background:rgba(255,255,255,.14);border-radius:8px;padding:8px 16px;font-size:13px}
+  .stat b{font-size:18px;display:block}
+  nav{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--line);display:flex;gap:4px;padding:0 24px}
+  nav button{border:none;background:none;color:var(--sub);font-size:15px;padding:14px 20px;cursor:pointer;border-bottom:3px solid transparent;font-family:inherit}
+  nav button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+  main{max-width:1080px;margin:0 auto;padding:24px}
+  .page{display:none}.page.active{display:block}
+  h2{font-size:18px;margin:28px 0 12px;padding-left:10px;border-left:4px solid var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-bottom:14px}
+  .card h3{margin:0 0 8px;font-size:15px;color:var(--accent)}
+  .card ul{margin:6px 0;padding-left:20px}
+  .card li{margin:3px 0}
+  .tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:10px;margin-left:6px;vertical-align:middle}
+  .tag.core{background:var(--accent-soft);color:var(--accent)}
+  .tag.safe{background:#e5f6ee;color:var(--ok)}
+  .tag.win{background:#fdf0e2;color:var(--warn)}
+  code,kbd{background:var(--code-bg);border-radius:4px;padding:1px 6px;font-family:Consolas,monospace;font-size:12.5px}
+  pre{background:var(--code-bg);border-radius:8px;padding:14px 16px;overflow-x:auto;font-size:12.5px;line-height:1.6}
+  pre code{background:none;padding:0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  /* 验证方案 */
+  .progress-wrap{position:sticky;top:52px;z-index:9;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px}
+  .progress-bar{flex:1;height:10px;background:var(--code-bg);border-radius:5px;overflow:hidden}
+  .progress-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2f6fed,#1a9e5c);transition:width .3s}
+  .progress-text{font-size:13px;color:var(--sub);white-space:nowrap}
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--sub);border-radius:6px;padding:5px 14px;cursor:pointer;font-size:12.5px;font-family:inherit}
+  .btn:hover{color:var(--accent);border-color:var(--accent)}
+  details.phase{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:12px;overflow:hidden}
+  details.phase summary{cursor:pointer;padding:13px 18px;font-weight:600;font-size:15px;list-style:none;display:flex;align-items:center;gap:10px;user-select:none}
+  details.phase summary::before{content:"▸";color:var(--accent);transition:transform .2s}
+  details.phase[open] summary::before{transform:rotate(90deg)}
+  details.phase summary .cnt{margin-left:auto;font-size:12px;color:var(--sub);font-weight:400}
+  .cases{padding:0 12px 12px}
+  .case{border:1px solid var(--line);border-radius:8px;margin:8px 0;padding:10px 14px;display:flex;gap:12px;align-items:flex-start}
+  .case.done{opacity:.55}.case.done .ct h4{text-decoration:line-through}
+  .case input[type=checkbox]{margin-top:5px;width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
+  .case .ct{flex:1}
+  .case h4{margin:0 0 4px;font-size:14px}
+  .case .cid{font-family:Consolas,monospace;font-size:12px;color:var(--accent);margin-right:6px}
+  .case p{margin:3px 0;font-size:13px;color:var(--sub)}
+  .case p b{color:var(--text);font-weight:600}
+  .sev{font-size:11px;padding:0 7px;border-radius:9px;margin-left:6px;white-space:nowrap}
+  .sev.extreme{background:#fbe6e6;color:var(--bad)}
+  .sev.normal{background:#e5f6ee;color:var(--ok)}
+  .tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .tbl th,.tbl td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  .tbl th{background:var(--code-bg)}
+  footer{text-align:center;color:var(--sub);font-size:12px;padding:30px 0 40px}
+</style>
+</head>
+<body>
+<header>
+  <h1>文件夹散开助手 · 功能清单与完整验证方案</h1>
+  <p>重构后多模块版本（main.py 入口） · 生成 2026-10-08 · 更新 2026-10-20（阶段 8 补勾选恢复/日志固定） · 适用于全量人工回归</p>
+  <div class="stats">
+    <div class="stat"><b>7</b>包 / 模块组</div>
+    <div class="stat"><b>8500+</b>产品代码行</div>
+    <div class="stat"><b>80+</b>功能点</div>
+    <div class="stat"><b>11</b>pytest 测试脚本</div>
+    <div class="stat"><b>81</b>人工验证用例</div>
+  </div>
+</header>
+<nav>
+  <button class="active" data-page="features">功能总览</button>
+  <button data-page="plan">验证操作方案</button>
+  <button data-page="quality">代码质量现状</button>
+</nav>
+<main>
+
+<!-- ============ 功能总览 ============ -->
+<div class="page active" id="page-features">
+  <h2>① 散开核心（core/ + ui/workers.py）</h2>
+  <div class="grid2">
+    <div class="card"><h3>散开方式</h3><ul>
+      <li><b>散开深度三档</b>：仅当前层 / 包含子文件夹 / 全部层级</li>
+      <li><b>操作方式</b>：移动（剪切）/ 复制（copy 带磁盘空间预检警告）</li>
+      <li><b>模拟运行</b>：预览清单、零改动、不抢锁，可在锁占用时执行</li>
+      <li><b>多线程执行 + 安全停止</b>：停止后已处理文件保持散开态</li>
+      <li>同名文件夹递归合并；智能重命名去重（<code>-1</code>、<code>-2</code> 后缀）</li>
+    </ul></div>
+    <div class="card"><h3>冲突处理</h3><ul>
+      <li>覆盖 / 跳过 / 自动重命名 三策略</li>
+      <li><b>覆盖前备份旧文件</b>（默认开），撤回时可还原<span class="tag safe">安全</span></li>
+      <li>只读目标跳过覆盖，禁止静默裸覆盖/物理删除</li>
+      <li>新文件落位失败 → 旧文件从备份还原回原位（B3）</li>
+    </ul></div>
+    <div class="card"><h3>筛选过滤</h3><ul>
+      <li>后缀过滤：JPG/PNG/PSD/C4D 复选框 + 自定义后缀（中英文逗号/空格分隔、实时红框校验）</li>
+      <li>「只散开 / 只排除」黑白名单切换</li>
+      <li>大文件保护：忽略大于 N MB（复选框门控数字框，默认 500MB，GUI/右键共用设置键）</li>
+      <li>忽略系统隐藏文件（设置项）</li>
+    </ul></div>
+    <div class="card"><h3>安全防护 <span class="tag safe">安全</span></h3><ul>
+      <li>磁盘根目录拦截（C:\、D:\ 等直接拒绝）</li>
+      <li>系统关键目录拦截（环境变量+硬编码，realpath/subst 解析防绕过）</li>
+      <li>链接 / junction / 挂载点防穿透（GUI 与右键两入口都拦）</li>
+      <li>长路径 <code>\\?\</code> 前缀支持；<code>os.remove</code> 失败回退 DeleteFileW（B8）</li>
+      <li>跨进程散开互斥锁（Windows 命名互斥体）</li>
+    </ul></div>
+  </div>
+
+  <h2>② 撤回体系（undo/）</h2>
+  <div class="card"><ul>
+    <li><b>栈式撤回</b>：最多 20 批，跨会话持久化 <code>undo_history.json</code>，启动时 pending 合并 + inflight 自愈 + 备份缺失自愈</li>
+    <li><b>三类还原</b>：移动 → 还原原位；复制 → 副本送回收站；被覆盖旧文件 → 从备份自动还原</li>
+    <li><b>幂等重入（A3）</b>：重复撤回/崩溃重试时已还原项静默跳过不误报，真丢失仍告警</li>
+    <li><b>失败留栈</b>：部分项撤回失败批次保留在栈中可重试</li>
+    <li><b>账本双保险（B2）</b>：写前留 .bak、主坏从 .bak 恢复、双坏隔离 .corrupt 不静默置空</li>
+    <li><b>防伪校验</b>：撤回路径合法性 + 备份路径信任校验，篡改 JSON 无法指向系统目录</li>
+    <li><b>备份清理三联动</b>：清空/删除备份 → 引用批次整批出栈 + 主日志 [备份] 块同步 + 设置行移除</li>
+  </ul></div>
+
+  <h2>③ 备份管理（backup/）</h2>
+  <div class="card"><ul>
+    <li>备份布局 <code>&lt;盘&gt;:\散开备份\&lt;批次&gt;\</code>（可见目录；盘根不可写回退父目录 <code>.scatter_backup</code>）</li>
+    <li>同盘 rename 瞬时备份；B4 落点保留源相对层级</li>
+    <li>自定义备份目录（含盘根/系统目录校验）</li>
+    <li>按天保留清理（移回收站）、清理失效备份（所有盘）、设置内逐盘打开/清空</li>
+    <li>保留期 = 撤回记录生命周期：出栈 / 20 批截断 / 撤回后自动清理</li>
+  </ul></div>
+
+  <h2>④ 右键菜单与静默模式（win32/menu.py + main.py）</h2>
+  <div class="card"><ul>
+    <li>4 个可勾选菜单项：<b>仅当前层散开 / 包含子文件夹散开 / 全部层级散开 / 在软件中打开（可撤回）</b></li>
+    <li>带图标、多选支持（MultiSelectModel=Player）、分组分隔线、注册版本号强制刷新</li>
+    <li><b>静默散开</b>：无 UI 后台执行，多选排队等锁（10 分钟），Toast 反馈，SHChangeNotify 刷新资源管理器</li>
+    <li>右键独立的「默认操作方式 / 默认冲突处理」设置，与 GUI 设置解耦</li>
+    <li>右键多选 10 秒窗口分组合并为「一批撤回」</li>
+    <li>日志写 silent.log / error.log；pythonw 崩溃写 crash.log</li>
+  </ul></div>
+
+  <h2>⑤ IPC 进程间同步（ui/ipc_server.py）</h2>
+  <div class="card"><ul>
+    <li>右键静默进程 ↔ GUI 实时同步日志与撤回批次</li>
+    <li>done 300ms 防抖合并（防目录树刷新风暴）</li>
+    <li>应用层 ack + batch_id 幂等去重 + 失败重投（A4）；无 ack 降级写 pending，启动合并</li>
+    <li>任务栏忙碌进度 + Toast 完成提示</li>
+  </ul></div>
+
+  <h2>⑥ 界面与体验（ui/）</h2>
+  <div class="grid2">
+    <div class="card"><h3>主界面</h3><ul>
+      <li>深 / 浅 / 跟随系统 三档主题（读 Windows 注册表，默认深色）</li>
+      <li>目录树异步扫描不卡 UI；F5 刷新 / Ctrl+Enter 散开 / Ctrl+A 全选父级</li>
+      <li>Shift 区间勾选；全选父级 / 取消全选 / 展开折叠切换</li>
+      <li>散开后局部增量刷新（&gt;300 新增回退全量）；撤回后勾选快照保真恢复</li>
+      <li>拖拽：路径框拖入 + 主窗口全局拖入（拖文件取所在目录）</li>
+      <li>清空目录、打开目录、空状态引导页</li>
+    </ul></div>
+    <div class="card"><h3>日志 / 通知</h3><ul>
+      <li>彩色分级日志，5 万行上限触顶提示一次</li>
+      <li>清空 / 复制错误 / 导出（UTF-8 BOM）；完成后自动清空（设置项）</li>
+      <li>Toast 悬浮通知（右下角，2.5s 淡出）；系统托盘（显示主界面/退出、双击唤出）</li>
+      <li>任务栏进度条（ITaskbarList3，含 30s 看门狗）</li>
+      <li>窗口几何记忆、重置窗口、悬停 tooltip 同步状态栏（截断 60 字）</li>
+      <li>标准菜单与 Qt 弹窗按钮中文化</li>
+    </ul></div>
+  </div>
+
+  <h2>⑦ 设置窗口（ui/settings_dialog.py）</h2>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>板块</th><th>可配置项</th></tr>
+      <tr><td>主题</td><td>跟随系统 / 亮色 / 暗色</td></tr>
+      <tr><td>右键菜单</td><td>4 个菜单项勾选；默认操作方式；默认冲突处理（含覆盖前备份子项）</td></tr>
+      <tr><td>备份管理</td><td>各盘备份现状（打开/清空）；自定义备份目录；超期天数移回收站；清理失效备份</td></tr>
+      <tr><td>启动与记忆</td><td>记忆父目录 / 记忆后缀筛选 / 记忆操作配置</td></tr>
+      <tr><td>行为与体验</td><td>完成后自动清空日志；忽略系统隐藏文件</td></tr>
+      <tr><td>系统设置</td><td>开机自启；关闭最小化到托盘；静默启动</td></tr>
+      <tr><td>底部</td><td>重置窗口；恢复默认设置；应用 / 完成 / 取消</td></tr>
+      <tr><td>主窗口侧</td><td>散开确认弹窗「不再提示」；筛选黑白名单模式；忽略体积开关/数值；窗口几何</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ============ 验证方案 ============ -->
+<div class="page" id="page-plan">
+  <div class="progress-wrap">
+    <span class="progress-text" id="ptext">进度 0 / 72</span>
+    <div class="progress-bar"><i id="pbar"></i></div>
+    <button class="btn" onclick="resetProgress()">重置进度</button>
+    <button class="btn" onclick="expandAll(true)">全部展开</button>
+    <button class="btn" onclick="expandAll(false)">全部收起</button>
+  </div>
+
+  <h2>阶段 0 · 环境准备（必做，后续所有用例依赖）</h2>
+  <div class="card">
+    <p>用管理员 PowerShell 执行下面脚本，在 D 盘生成标准测试树（无 D 盘就把 <code>$R</code> 改成其他盘）：</p>
+<pre><code>$R = "D:\散测"
+Remove-Item $R -Recurse -Force -ErrorAction SilentlyContinue
+# 主测试树：三层嵌套 + 多种文件类型 + 冲突 + 隐藏 + 只读
+New-Item -ItemType Directory -Force "$R\父目录\子A\子A1","$R\父目录\子B\子B1\子B2","$R\冲突源" | Out-Null
+"根jpg"  | Out-File "$R\父目录\根文件1.jpg"
+"根txt"  | Out-File "$R\父目录\根文件2.txt"
+"a1"     | Out-File "$R\父目录\子A\a1.jpg"
+"a2png"  | Out-File "$R\父目录\子A\a2.png"
+"a11"    | Out-File "$R\父目录\子A\子A1\a11.txt"
+"b1"     | Out-File "$R\父目录\子B\b1.jpg"
+"b2psd"  | Out-File "$R\父目录\子B\b2.psd"
+"deep"   | Out-File "$R\父目录\子B\子B1\子B2\deep.txt"
+"hidden" | Out-File "$R\父目录\隐藏文件.jpg"
+"旧内容" | Out-File "$R\父目录\同名.txt"          # 目标已存在（旧）
+"新内容" | Out-File "$R\冲突源\同名.txt"           # 用于制造冲突
+"ro"     | Out-File "$R\父目录\只读旧.txt"
+Set-ItemProperty "$R\父目录\隐藏文件.jpg" -Name Attributes -Value "Hidden"
+Set-ItemProperty "$R\父目录\只读旧.txt"  -Name Attributes -Value "ReadOnly"
+# 超长路径（&gt;260 字符）
+$deep = "$R\长路径" + ("\层级很深很深的目录名" * 18)
+New-Item -ItemType Directory -Force $deep | Out-Null
+"longpath" | Out-File "$deep\超长路径文件.txt"
+# 600MB 大文件（用于大文件忽略用例，不需要可注释掉）
+fsutil file createnew "$R\父目录\大文件.bin" 629145600 | Out-Null
+Write-Host "测试树已生成：$R"</code></pre>
+    <ul>
+      <li>确认 Python 环境可用：<code>python -m py_compile main.py</code></li>
+      <li>启动方式：双击 <code>运行文件夹散开工具.bat</code>（pythonw 无控制台），或 <code>python main.py</code>（有控制台可看输出）</li>
+      <li>建议把本测试树复制一份留作「母版」，每轮破坏性用例后用母版还原：<code>robocopy D:\散测-母版 D:\散测 /MIR</code></li>
+    </ul>
+  </div>
+
+  <h2>阶段 1 · 启动与基础界面</h2>
+
+  <h2 style="margin-top:6px">阶段 2 · 散开核心功能</h2>
+
+  <h2 style="margin-top:6px">阶段 3 · 撤回体系</h2>
+
+  <h2 style="margin-top:6px">阶段 4 · 备份管理</h2>
+
+  <h2 style="margin-top:6px">阶段 5 · 右键菜单与静默模式</h2>
+
+  <h2 style="margin-top:6px">阶段 6 · 设置项全量</h2>
+
+  <h2 style="margin-top:6px">阶段 7 · 极端操作（破坏性，逐个用母版还原环境）</h2>
+
+  <div id="phases"></div>
+
+  <h2>自动化回归（改代码后必跑，非人工）</h2>
+  <div class="card">
+<pre><code>cd c:\Users\LLLL\WorkBuddy\文件处理-重构
+python -m pytest tests\ -v</code></pre>
+    <p>11 个脚本覆盖：A2 历史写锁 / A3 撤回幂等 / A4 IPC ack / B1 inflight 自愈 / B2 账本双保险 / B3 覆盖落位回滚 / B4 备份相对层级 / B8 长路径删除回退 / F3 嵌套备份清理 / UndoHistoryStore 单测。</p>
+  </div>
+</div>
+
+<!-- ============ 代码质量 ============ -->
+<div class="page" id="page-quality">
+  <h2>结论：已脱离「屎山」，处于重构过渡期</h2>
+  <div class="card"><ul>
+    <li>✅ 分层清晰无循环依赖：<code>infra → core/backup/win32 → undo → ui → main</code></li>
+    <li>✅ 全库无 TODO/FIXME/XXX/HACK 残留标记</li>
+    <li>✅ 缺陷编号（A2/A3/A4/B1-B4/B8/F3 等）与测试一一对应，防回归设计成熟</li>
+    <li>✅ 纯逻辑层（undo/history、backup/maintenance）无 Qt 依赖，可单测</li>
+  </ul></div>
+  <h2>2026-10-08 优化已完成</h2>
+  <div class="card"><ul>
+    <li>✅ <code>agents.md</code> 已重写为多模块版指南（含模块地图 + 全部踩坑约定），AI 接手不再读到过时的单文件描述</li>
+    <li>✅ <code>SettingsDialog.__init__</code>（原 354 行）→ 拆为 7 个 <code>_build_*_section</code> 方法，构造函数只剩 50 行装配</li>
+    <li>✅ <code>run_silent_folder</code>（原 243 行）→ 拆为「目标校验 / 源收集 / 偏好读取 / <code>_SilentIpc</code> 通道（含 ack 重投）/ pending 暂存」五单元，主函数剩约 80 行</li>
+    <li>✅ <code>_move_item_impl</code>（原 209 行）→ 拆为「目录分支 / 文件分支 / 过滤 / 覆盖保护 / B3 还原」五函数，move/copy 镜像重复已消除</li>
+    <li>✅ 陈旧注释清理：<code>main.py</code> 头部、<code>win32/menu.py</code> docstring；三份过程文档已加「新版已删除」归档标注</li>
+    <li>✅ <code>main_window.py</code>（原 1939 行）按面板拆为 7 个 mixin（多继承装配，外部调用点零改动）：<code>app_build.py</code>（519，界面构建）/ <code>app_run.py</code>（348，散开与撤回）/ <code>app_options.py</code>（295，选项与记忆）/ <code>app_lifecycle.py</code>（188，托盘与退出）/ <code>app_tree.py</code>（172，目录树）/ <code>app_theme.py</code>（112，主题）/ <code>app_events.py</code>（109，事件），装配根只剩 346 行；拆分前留底 <code>main_window.py.bak</code></li>
+    <li>✅ 回归全绿：67 个 pytest 全部通过，行为零变化</li>
+  </ul></div>
+  <h2>仍存的局部问题（不紧急）</h2>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>位置</th><th>问题</th><th>建议</th></tr>
+      <tr><td><code>ui/main_window.py.bak</code></td><td>拆分前留底文件（1939 行旧版）</td><td>手动验证全部通过、稳定运行一段时间后删除</td></tr>
+      <tr><td>长路径前缀 / 拖拽拦截 / 根目录判定 / 日志攒批</td><td>4 处小重复（2-3 处实现；<code>_pre</code> 与 <code>_lp</code> 语义有「双双加前缀」差异，合并需谨慎）</td><td>统一收口到 infra，顺手做即可</td></tr>
+      <tr><td><code>.codebuddy/tmp/</code></td><td>5 个重构脚手架脚本（build_split.py 等）</td><td>确认无用后删除</td></tr>
+      <tr><td>仓库卫生</td><td>54 个 <code>.pyc</code> 缓存与运行期数据（undo_history.json.bak）混在项目目录</td><td>纳入版本管理时加 <code>.gitignore</code></td></tr>
+      <tr><td>已知未修（低档）</td><td>组 id 10 秒窗口、8.3 短名判定、多开共写历史、互斥体可被抢占、IPC 无 ack 降级</td><td>触发条件苛刻，暂不处理</td></tr>
+    </table>
+  </div>
+  <h2>对 AI 修改的友好度</h2>
+  <div class="card"><ul>
+    <li>改备份 → 只读 <code>backup/</code>（349 行）；改右键 → <code>win32/menu.py</code> + <code>main.py</code>；改撤回 → <code>undo/</code>（686 行）；改散开逻辑 → <code>core/</code>（已拆小）。不再需要加载全部代码。</li>
+    <li>改设置窗口 → 直接定位对应 <code>_build_*_section</code> 方法；改主窗口某块 UI → 定位对应 mixin 文件（界面构建 <code>app_build</code> / 散开撤回 <code>app_run</code> / 选项记忆 <code>app_options</code> / 托盘退出 <code>app_lifecycle</code> / 目录树 <code>app_tree</code> / 主题 <code>app_theme</code> / 事件 <code>app_events</code>）。</li>
+    <li>至此全项目最大文件仅 519 行，<b>任何修改都不再需要加载全部代码</b>。</li>
+    <li>改任何右键菜单文案/命令必须递增 <code>win32/menu.py</code> 的 <code>MENU_REG_VERSION</code>，否则老用户菜单不刷新。</li>
+  </ul></div>
+</div>
+
+</main>
+<footer>文件夹散开助手 · 功能清单与验证方案 · 进度保存在浏览器 localStorage</footer>
+
+<script>
+/* ---------- 用例数据 ---------- */
+const N='<span class="sev normal">常规</span>', X='<span class="sev extreme">极端</span>';
+const PHASES=[
+{t:"阶段 1 · 启动与基础界面",cases:[
+ ["UI-01","双击 bat 启动","运行 <code>运行文件夹散开工具.bat</code>","窗口正常出现，默认深色主题，无闪退；日志区无 crash.log 提示",N],
+ ["UI-02","主题三档切换","设置→主题→亮色/暗色/跟随系统→应用","界面即时换肤；保存后重启保持所选",N],
+ ["UI-03","拖拽加载目录","① 把文件夹拖到路径框 ② 拖到主窗口任意处 ③ 拖一个文件进来","①② 路径框填入该文件夹并建树；③ 自动取文件所在目录",N],
+ ["UI-04","浏览按钮选目录","点浏览选择 D:\\散测\\父目录","目录树加载出 子A/子B/冲突源之外的全部内容",N],
+ ["UI-05","勾选与 Shift 区间勾选","勾选若干项；点第一项，Shift+点第五项","Shift 把区间内项一并勾选/取消，并有闪烁反馈",N],
+ ["UI-06","全选/取消/展开折叠","Ctrl+A；「取消全选」；「展开/折叠」切换按钮","Ctrl+A 全选父级项；按钮行为与文案一致",N],
+ ["UI-07","F5 刷新","往目录里手工加文件后按 F5","树局部/全量刷新出新文件，不卡 UI",N],
+ ["UI-08","清空目录","点「清空目录」","路径框与目录树同时清空（无残留树），回到空状态",N],
+ ["UI-09","打开目录","点「打开目录」","资源管理器打开当前路径",N],
+ ["UI-10","空状态引导页","清空目录后观察","显示空状态引导，不出现报错",N],
+ ["UI-11","窗口几何记忆","调整窗口大小位置→关闭→重开","恢复上次大小位置；设置里「重置窗口」可还原",N],
+ ["UI-12","托盘行为","开启「关闭最小化到托盘」→点关闭；双击托盘图标；托盘右键退出","关闭进托盘不退出；双击唤出；右键可彻底退出",N],
+]},
+{t:"阶段 2 · 散开核心功能",cases:[
+ ["SC-01","仅当前层·移动","加载父目录，深度=仅当前层，方式=移动，散开","根文件1.jpg/根文件2.txt 上提到所选位置；子A/子B 原样不动",N],
+ ["SC-02","包含子文件夹·移动","母版还原；深度=包含子文件夹","子A、子B 第一层的文件上提；子A1、子B1 保持不动",N],
+ ["SC-03","全部层级·移动","母版还原；深度=全部层级","含子B2 的 deep.txt 全部上提；空文件夹按预期处理",N],
+ ["SC-04","复制模式","母版还原；方式=复制，散开","目标出现副本，源文件全部保留",N],
+ ["SC-05","模拟运行","开「模拟运行」执行一次","日志打印预览清单；磁盘零改动；不占互斥锁",N],
+ ["SC-06","冲突·自动重命名","先把 冲突源\\同名.txt 复制进 子A，冲突=重命名后散开","上提后生成 同名-1.txt，两份内容都在",N],
+ ["SC-07","冲突·跳过","同上结构，冲突=跳过","目标旧 同名.txt 内容不变（旧内容），源仍在原处，日志计跳过",N],
+ ["SC-08","冲突·覆盖+备份","同上结构，冲突=覆盖且开启备份","目标变为新内容；D:\\散开备份\\&lt;批次&gt;\\ 里能找回旧内容文件",N],
+ ["SC-09","后缀过滤·勾选","只勾 JPG，散开","只有 .jpg 上提，txt/png/psd 不动",N],
+ ["SC-10","自定义后缀解析","自定义框输入 <code>txt，md psd</code>（中文逗号+空格混合）","三种后缀都被正确识别散开（无「整坨后缀」静默失效）",N],
+ ["SC-11","非法后缀拦截","输入 <code>.jpg!!</code> 或空提交","输入框红框提示，无法开始散开",N],
+ ["SC-12","只散开/只排除切换","切到「只排除」，勾 JPG","jpg 被排除，其余全部上提",N],
+ ["SC-13","大文件忽略","勾「忽略大于」设 500MB，散开","600MB 大文件.bin 被跳过并在日志说明",N],
+ ["SC-14","隐藏文件","设置开「忽略系统隐藏文件」后散开","隐藏文件.jpg 不动；关掉该设置则正常上提",N],
+ ["SC-15","中途停止","对大目录开始散开后立刻点「停止」","线程安全停下，已散开文件保持散开态，无半截文件，日志正常收尾",N],
+ ["SC-16","快捷键散开","Ctrl+Enter","等同点击开始按钮",N],
+ ["SC-17","完成反馈","完成一次散开","状态栏摘要 + Toast 弹出 + 任务栏进度条走完并清除",N],
+]},
+{t:"阶段 3 · 撤回体系",cases:[
+ ["UD-01","移动撤回还原","SC-01 后点「撤回」","全部文件回到原文件夹结构，日志记录撤回明细",N],
+ ["UD-02","复制撤回","SC-04 后撤回","上提的副本被送入回收站，源文件不动",N],
+ ["UD-03","覆盖撤回·备份还原","SC-08 后撤回","新文件退回原处，旧内容文件从备份还原，内容核对一致",N],
+ ["UD-04","跨会话撤回","散开后完全退出软件→重开→撤回","历史批次仍在，撤回成功",N],
+ ["UD-05","撤回幂等","撤回成功后连点多次撤回/对同批重复触发","不重复报错，已还原项静默跳过",N],
+ ["UD-06","占用留栈重试","散开后用 Excel/Word 打开一个待还原文件→撤回（记事本读完就关、不锁文件，测不出来）","该项失败但批次留栈；关闭 Excel/Word 再撤回→成功",N],
+ ["UD-07","20 批上限","连续做 21 批散开（可用小文件夹快速刷）","最老一批自动出栈不可撤，日志/界面体现截断",N],
+ ["UD-08","备份缺失自愈","覆盖散开后，手动删除 D:\\散开备份 对应批次→重启软件","引用该备份的批次整批出栈 + 日志打 [撤回] 说明",N],
+ ["UD-09","篡改历史防伪","退出软件，手改 undo_history.json 把路径指向 C:\\Windows→重开→撤回","路径校验拒绝执行，不删系统文件，日志告警",X],
+]},
+{t:"阶段 4 · 备份管理",cases:[
+ ["BK-01","备份落位与层级","SC-08 后检查 D:\\散开备份\\&lt;批次&gt;\\","旧文件在内，且保留源相对层级（B4）",N],
+ ["BK-02","设置内打开备份","设置→备份管理→「打开」","资源管理器打开对应盘备份根",N],
+ ["BK-03","清空备份三联动","设置→备份管理→「清空」某盘","备份进回收站；引用批次整批出栈；主日志 [备份] 块同步移除",N],
+ ["BK-04","自定义备份目录","设置自定义备份目录为 D:\\我的备份→再触发覆盖散开","新备份落到自定义目录；再把它设为 C:\\Windows→被校验拒绝",N],
+ ["BK-05","按天清理","设保留 0 天（或把备份文件改老日期）→点清理","超期备份移回收站",N],
+ ["BK-06","清理失效备份","手动制造孤儿备份（删批次记录留文件夹）→点「清理失效备份」","孤儿目录被清掉，日志说明",N],
+]},
+{t:"阶段 5 · 右键菜单与静默模式",cases:[
+ ["RM-01","菜单注册","设置勾选 4 个菜单项→保存→资源管理器右键一个文件夹","出现 4 项，带图标，分组分隔线正确",N],
+ ["RM-02","右键·仅当前层","复制父目录为 父目录-rm2，右键「仅当前层散开」","无窗口静默完成；Toast 提示；资源管理器自动刷新",N],
+ ["RM-03","右键·两层/全部层级","分别对副本执行另外两个深度菜单","结果与 GUI 对应深度一致",N],
+ ["RM-04","多选排队","Ctrl 选 2~3 个文件夹→右键散开","排队逐个执行（等锁），最终合并为「一批撤回」",N],
+ ["RM-05","在软件中打开","右键「在软件中打开（可撤回）」","GUI 启动并预载该目录，可直接操作",N],
+ ["RM-06","右键默认配置","设置右键默认方式=复制、默认冲突=重命名→右键制造冲突散开","按右键默认配置执行，而非 GUI 的配置",N],
+ ["RM-07","GUI 开着时右键散开","先开 GUI，再右键散开","日志实时同步进 GUI 日志框，撤回批次同步入栈",N],
+ ["RM-08","菜单注销","取消勾选全部菜单项→保存","右键菜单消失",N],
+]},
+{t:"阶段 6 · 设置项全量",cases:[
+ ["ST-01","记忆三项","开「记忆父目录/后缀筛选/操作配置」→改值→保存→重启","三项均恢复上次值；关掉对应记忆后重启回默认",N],
+ ["ST-02","完成后自动清空日志","开启后完成一次散开","日志在完成后被自动清空",N],
+ ["ST-03","开机自启","勾开机自启→regedit 查 HKCU\\...\\Run","存在对应键值；取消后键值删除（可不真重启）",N],
+ ["ST-04","关闭最小化到托盘","开启→点窗口 X","进托盘不退出；关闭后 X 直接退出",N],
+ ["ST-05","静默启动","开启静默启动→从右键「在软件中打开」或命令行启动","主窗口不弹出，驻留托盘",N],
+ ["ST-06","恢复默认设置","乱改一批设置→点「恢复默认设置」","全部回默认（主题=深色），状态栏提示，无弹窗",N],
+ ["ST-07","散开确认「不再提示」","勾选确认弹窗的「不再提示」→之后散开","不再弹确认；清掉对应设置键后恢复弹窗",N],
+ ["ST-08","重置窗口","设置底部「重置窗口」","窗口回到默认尺寸位置",N],
+]},
+{t:"阶段 7 · 极端操作（每例后用母版还原）",cases:[
+ ["EX-01","盘根拦截","路径框输入 C:\\ 或 D:\\ →散开","直接拒绝并提示，不扫描",X],
+ ["EX-02","系统目录拦截","输入 C:\\Windows、C:\\Program Files","拒绝散开",X],
+ ["EX-03","junction 穿透","mklink /J D:\\散测\\link C:\\Windows →对 link 选两层/全部层级散开","展开前拦截/降级为仅当前层，不穿透到系统目录",X],
+ ["EX-04","超长路径","对 D:\\散测\\长路径（>260字符）散开+撤回","文件正常上提与还原，无 Errno 123 残骸",X],
+ ["EX-05","文件占用","用 Excel/记事本占用目标处同名文件→覆盖散开","跳过并警示，不裸覆盖、不崩",X],
+ ["EX-06","只读目标","制造与 只读旧.txt 同名冲突→覆盖","只读目标跳过覆盖，源保留",X],
+ ["EX-07","扫描风暴","树扫描中连续 F5、换路径、清空、乱输无效路径","旧扫描作废不闪退，UI 始终响应",X],
+ ["EX-08","散开中途杀进程","大目录散开中用任务管理器结束 pythonw.exe→重启软件","inflight 账本自愈入栈，可继续撤回，无孤儿",X],
+ ["EX-09","撤回中途杀进程","撤回执行中杀进程→重启→再次撤回","幂等完成剩余项，不误报",X],
+ ["EX-10","历史文件损坏","退出软件→把 undo_history.json 改成乱码→重开","自动从 .bak 恢复，历史不丢",X],
+ ["EX-11","双损坏",".json 和 .bak 都改坏→重开","隔离为 .corrupt，不静默清空，有提示",X],
+ ["EX-12","双开软件","已开一个 GUI 再启动第二个","不崩、不互抢出乱（互斥行为符合预期）",X],
+ ["EX-13","日志触顶","对万级文件目录散开（可用脚本造 1 万小文件）","5 万行触顶时打一条 [警告]，UI 不卡死",X],
+ ["EX-14","磁盘空间不足","复制模式指向剩余空间极小的盘（可用 subst 小盘/U盘）","预检弹出警告，不盲目开拷",X],
+ ["EX-15","subst 绕过","subst S: C:\\Windows →对 S:\\ 散开","realpath 解析后仍被系统目录防线拦截",X],
+ ["EX-16","备份根不可写","让盘根不可写（或模拟）→触发覆盖备份","回退到父目录 .scatter_backup，不裸覆盖",X],
+ ["EX-17","日志三操作","「复制错误」「导出」「清空」","导出文件带 UTF-8 BOM 可正常打开；复制内容为错误行；清空后界面复位",N],
+ ["EX-18","同名文件夹合并","源与目标存在同名子文件夹，各自有文件→散开","递归合并内容，冲突按策略处理，不丢文件",X],
+]},
+{t:"阶段 8 · 修复专项回归（2026-10-12）",cases:[
+ ["FX-01","换目录不残留旧勾选","取消勾选某文件夹→拖入/浏览到【另一个】目录","新目录按默认勾选（顶层勾、深层不勾），不受旧目录取消记录影响；再按 F5 刷新同一目录，手动取消的勾选仍保持",N],
+ ["FX-02","撤回后深层不被全选","深度=包含子文件夹/全部层级散开后点「撤回」","还原出的文件夹里只有顶层源文件夹被勾选，深层子文件夹不勾（避免随手再散一次卷入全部层级）",N],
+ ["FX-03","散开后新增项置顶","只勾选一个子文件夹散开→观察目录树","新散出的文件/文件夹排在目录树最上方（下次 F5 全量刷新恢复全局排序）",N],
+ ["FX-04","复制模式撤回删文件夹","复制模式散开（含整棵子文件夹被复制上去）→撤回","复制出的整个文件夹连同文件一起进回收站，源原地不动",N],
+ ["FX-05","胶囊滚动条","滚动目录树与日志区；深色/浅色主题各看一眼","滚动条为细胶囊样式、无灰底轨道条，主题切换后依然正确",N],
+ ["FX-06","清空目录清警示","制造一次跳过警示（勾「忽略大于」触发黄字）→点「清空目录」","黄字警示随目录一起清空，不再残留",N],
+ ["FX-07","红框后缀禁止开始","自定义后缀输入 jpg!!（红框状态）→分别点「开始散开」「模拟运行」","弹窗提示并拒绝执行，不散开不模拟；改正后缀后恢复正常（与 SC-11 互为印证）",N],
+ ["FX-08","撤回恢复散开前勾选","散开前点「全选父级」（顶层全勾）→散开→撤回","撤回后顶层文件夹仍全部勾选（恢复散开前布局，不再只剩零星几个）",N],
+ ["FX-09","日志固定贴底","拖动/滚动目录树、上下缩放窗口","日志框高度不变、始终贴在窗口底部；滚动条只有细滑块，没有外围凹槽/包围框",N],
+]},
+];
+
+/* ---------- 渲染 ---------- */
+const store=JSON.parse(localStorage.getItem('scatterQA')||'{}');
+const box=document.getElementById('phases');
+let total=0;
+PHASES.forEach((ph,pi)=>{
+  const det=document.createElement('details');det.className='phase';
+  const sum=document.createElement('summary');
+  sum.innerHTML=ph.t+'<span class="cnt" data-cnt></span>';
+  det.appendChild(sum);
+  const wrap=document.createElement('div');wrap.className='cases';
+  ph.cases.forEach(c=>{
+    total++;
+    const id=c[0];
+    const div=document.createElement('div');div.className='case'+(store[id]?' done':'');
+    div.innerHTML='<input type="checkbox" id="cb-'+id+'" '+(store[id]?'checked':'')+'>'
+      +'<label class="ct" for="cb-'+id+'"><h4><span class="cid">'+id+'</span>'+c[1]+c[4]+'</h4>'
+      +'<p><b>操作：</b>'+c[2]+'</p><p><b>预期：</b>'+c[3]+'</p></label>';
+    wrap.appendChild(div);
+    div.querySelector('input').addEventListener('change',e=>{
+      store[id]=e.target.checked;
+      localStorage.setItem('scatterQA',JSON.stringify(store));
+      div.classList.toggle('done',e.target.checked);
+      refresh();
+    });
+  });
+  det.appendChild(wrap);
+  box.appendChild(det);
+});
+function refresh(){
+  let done=0;for(const k in store)if(store[k])done++;
+  document.getElementById('ptext').textContent='进度 '+done+' / '+total;
+  document.getElementById('pbar').style.width=(done/total*100)+'%';
+  document.querySelectorAll('details.phase').forEach((d,i)=>{
+    const cnt=d.querySelector('[data-cnt]');
+    let dn=0;PHASES[i].cases.forEach(c=>{if(store[c[0]])dn++});
+    cnt.textContent=dn+' / '+PHASES[i].cases.length;
+  });
+}
+function resetProgress(){if(confirm('清空所有勾选进度？')){localStorage.removeItem('scatterQA');location.reload();}}
+function expandAll(open){document.querySelectorAll('details.phase').forEach(d=>d.open=open);}
+refresh();
+
+/* ---------- 页签 ---------- */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('page-'+b.dataset.page).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
