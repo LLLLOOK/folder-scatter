@@ -67,7 +67,7 @@ def apply_menu_registry(opts):
         icon_path = os.path.abspath(sys.argv[0]) + ",0"
     else:
         prog = '"%s" "%s"' % (_find_pythonw(), os.path.join(script_dir, "main.py"))
-        icon_path = os.path.join(script_dir, "appicon.ico")
+        icon_path = os.path.join(script_dir, "assets", "icons", "appicon.ico")
     reg_root = r"Software\Classes\Directory\shell"
     # (选项键, 注册表子键, 菜单显示文字, 注册表命令)
     entries = [

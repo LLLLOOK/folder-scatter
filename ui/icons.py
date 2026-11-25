@@ -35,17 +35,15 @@ def _emoji_icon(ch, size=18):
 
 
 def _load_app_icon():
-    """从随程序带走的多尺寸 PNG（16/32/64/128/256/512）组装窗口图标。
-
-    兼容：开发态（PNG 在项目根）、PyInstaller --onefile（_MEIPASS）、
-    PyInstaller --onedir / Nuitka（随 exe 分发的资源目录）。
-    """
+    """从 assets/icons 的多尺寸 PNG 组装窗口图标，兼容旧版根目录布局。"""
     icon = QIcon()
-    candidates = []
+    roots = []
     if IS_FROZEN:
-        candidates.append(RESOURCE_DIR)
-        candidates.append(_undo_base)
-    candidates.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        roots.append(RESOURCE_DIR)
+        roots.append(_undo_base)
+    roots.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    candidates = [os.path.join(root, "assets", "icons") for root in roots]
+    candidates.extend(roots)
     for size in (16, 32, 64, 128, 256, 512):
         for base in candidates:
             p = os.path.join(base, f"appicon_{size}.png")

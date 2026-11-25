@@ -17,7 +17,7 @@ cd /d "%ROOT%"
 echo.
 echo 正在打包单文件 exe ...（5-15 分钟，请等待）
 echo.
-"%PY%" -m nuitka --onefile --windows-console-mode=disable --enable-plugin=pyqt6 --lto=no --windows-icon-from-ico="%ROOT%appicon.ico" --include-data-files="%ROOT%appicon.ico=appicon.ico" --include-data-files="%ROOT%appicon_16.png=appicon_16.png" --include-data-files="%ROOT%appicon_32.png=appicon_32.png" --include-data-files="%ROOT%appicon_64.png=appicon_64.png" --include-data-files="%ROOT%appicon_128.png=appicon_128.png" --include-data-files="%ROOT%appicon_256.png=appicon_256.png" --include-data-files="%ROOT%appicon_512.png=appicon_512.png" --output-dir="%OUT%" --output-filename=FolderScatter_plain.exe --assume-yes-for-downloads --remove-output "%ROOT%main.py"
+"%PY%" -m nuitka --onefile --windows-console-mode=disable --enable-plugin=pyqt6 --lto=no --windows-icon-from-ico="%ROOT%assets\icons\appicon.ico" --include-data-files="%ROOT%assets\icons\appicon.ico=assets/icons/appicon.ico" --include-data-files="%ROOT%assets\icons\appicon_16.png=assets/icons/appicon_16.png" --include-data-files="%ROOT%assets\icons\appicon_32.png=assets/icons/appicon_32.png" --include-data-files="%ROOT%assets\icons\appicon_64.png=assets/icons/appicon_64.png" --include-data-files="%ROOT%assets\icons\appicon_128.png=assets/icons/appicon_128.png" --include-data-files="%ROOT%assets\icons\appicon_256.png=assets/icons/appicon_256.png" --include-data-files="%ROOT%assets\icons\appicon_512.png=assets/icons/appicon_512.png" --output-dir="%OUT%" --output-filename=FolderScatter_plain.exe --assume-yes-for-downloads --remove-output "%ROOT%main.py"
 echo.
 echo BUILD_EXITCODE=%ERRORLEVEL%
 if /I "%~1"=="-nopause" goto :eof

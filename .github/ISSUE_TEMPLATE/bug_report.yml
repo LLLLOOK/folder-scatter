@@ -1,0 +1,66 @@
+name: 问题反馈
+description: 反馈散开、撤回、右键菜单、安装或界面问题
+title: "[Bug] 请简要描述问题"
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请不要填写真实姓名、私人文件内容或完整个人路径；示例可写成 `D:\测试资料\`。
+  - type: dropdown
+    id: area
+    attributes:
+      label: 问题涉及
+      options:
+        - 散开文件
+        - 撤回操作
+        - 覆盖备份
+        - 资源管理器右键菜单
+        - 安装或启动
+        - 界面或显示
+        - 其他
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 软件版本
+      description: 例如 v1.0.0；源码运行可填写提交号或下载日期。
+      placeholder: v1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: windows
+    attributes:
+      label: Windows 版本
+      options:
+        - Windows 11
+        - Windows 10
+        - 其他或不确定
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 发生了什么
+      description: 请按顺序写出操作步骤、实际结果，以及你原本预期的结果。
+      placeholder: |
+        1. 打开软件并选择……
+        2. 点击……
+        3. 实际出现……
+        4. 我原本希望……
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志或截图
+      description: 可粘贴相关错误日志或拖入截图；请先遮住私人路径和文件名。
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已隐去私人信息，并且没有在 Issue 中上传需要保密的文件。
+          required: true
