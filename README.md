@@ -10,6 +10,7 @@ Windows 桌面小工具。从网上下的压缩包、别人发来的资料，解
 - 协议：[GPL-3.0](LICENSE)（可以免费用、随便改；改了再发布，也必须开源）
 - 形态：源码运行，或用 Nuitka 打包成约 20 MB 的单文件 exe
 - 下载：不想装 Python 的话，直接拿 [v1.0.0 免安装版](https://github.com/LLLLOOK/folder-scatter/releases/latest)（Windows 64 位，双击即用）
+- 介绍页：[图文介绍与下载（含国内网盘）](https://folder-scatter.app.workbuddy.host/?sharecode=YRIDAC7VQN)
 
 ![主界面与右键菜单](docs/screenshots/main.png)
 
