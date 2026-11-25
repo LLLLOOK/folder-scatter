@@ -140,7 +140,7 @@ Issue 和 PR 都欢迎。提 PR 前请先跑一遍 `pytest tests\ -q`，并保�
 ## 许可证
 
 本项目基于 [GNU General Public License v3.0](LICENSE) 发布。
-Copyright (C) 2026 LLLL
+Copyright (C) 2026 LLLLOOK
 
 意思是大白话版：
 
